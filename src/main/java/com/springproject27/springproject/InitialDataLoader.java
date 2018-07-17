@@ -1,35 +1,25 @@
 package com.springproject27.springproject;
 
-import com.springproject27.springproject.user.User;
-import com.springproject27.springproject.user.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class InitialDataLoader implements ApplicationListener<ApplicationReadyEvent> {
 
-    private final UserService userService;
+    private PasswordEncoder passwordEncoder;
 
-
-    public InitialDataLoader(UserService userService) {
-        this.userService = userService;
+    @Autowired
+    public InitialDataLoader(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public void onApplicationEvent(ApplicationReadyEvent event){
-        addUser("Jan", "Kowalski", "jan@kowalski.com", "222331344");
-        addUser("Paweł", "Nowak", "pawnow@gmail.com", "545777456");
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        System.out.println(passwordEncoder.encode("password"));
     }
 
-    private void addUser(String imie, String nazwisko, String email, String telefon) {
-        User user = User.builder()
-                .firstName(imie)
-                .lastName(nazwisko)
-                .email(email)
-                .phoneNumber(telefon)
-                .build();
-        userService.saveOrUpdate(user);
-    }
 }
