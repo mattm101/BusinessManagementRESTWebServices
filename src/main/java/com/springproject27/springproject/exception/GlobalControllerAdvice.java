@@ -1,27 +1,28 @@
 package com.springproject27.springproject.exception;
 
-import com.springproject27.springproject.exception.EmailAlreadyExistsException;
-import com.springproject27.springproject.exception.EntityNotFoundException;
-import com.springproject27.springproject.user.UserController;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@RestControllerAdvice(assignableTypes = UserController.class)
+@RestControllerAdvice(assignableTypes = {RestController.class})
 public class GlobalControllerAdvice {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    void userNotFoundHandler(HttpServletResponse response, Exception e) throws IOException {
+    public void entityNotFoundHandler(HttpServletResponse response, EntityNotFoundException e) throws IOException {
         response.sendError(HttpStatus.NOT_FOUND.value(), e.getMessage());
     }
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    void emailExistsHandler(HttpServletResponse response, Exception e) throws IOException {
+    @ExceptionHandler(EntityAlreadyExistsException.class)
+    public void entityExistsHandler(HttpServletResponse response, EntityAlreadyExistsException e) throws IOException {
         response.sendError(HttpStatus.CONFLICT.value(), e.getMessage());
     }
 
-
-
+    @ExceptionHandler(IllegalArgumentException.class)
+    void illegalArgumentHandler(HttpServletResponse response, Exception e) throws IOException {
+        response.sendError(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+    }
 }

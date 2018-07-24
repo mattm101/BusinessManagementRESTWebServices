@@ -1,10 +1,11 @@
 package com.springproject27.springproject.user;
 
+import com.springproject27.springproject.exception.EntityAlreadyExistsException;
+import com.springproject27.springproject.exception.EntityNotFoundException;
 import com.springproject27.springproject.role.Role;
 import com.springproject27.springproject.role.RoleRepository;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.springproject27.springproject.vacation.Vacation;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -17,83 +18,87 @@ import java.util.Optional;
 
 @Service
 @Transactional
-@Getter
-@Setter
-public class UserService implements UserDetailsService{
-    @Autowired
-    private RoleRepository roleRepository;
+@AllArgsConstructor
+public class UserService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    public User getUser(String username) {
-        return userRepository.findByUsername(username).get();
+    private final RoleRepository roleRepository;
+
+    public User getUserByUsername(String username) {
+        return userRepository.findUserByUsername(username).get();
     }
 
-    List<User> findAll(){
+    public List<User> findAll() {
         return userRepository.findAll();
     }
 
-    List<User> findByLastName(String lastName){
+    public List<User> findByLastName(final String lastName) {
         return userRepository.findUsersByLastNameContainingIgnoreCase(lastName);
     }
 
-    public void assignRoleToUser(Role role, User user) {
-        Role assignRole = roleRepository.findOneByName(role.getName()).get();
-        User assignUser = userRepository.findByUsername(user.getUsername()).get();
-        assignUser.getRoles().add(assignRole);
-        userRepository.save(assignUser);
-    }
-
-    public User loadUserByUsername(String username) {
-        User acc = getUser(username);
-        acc.setLastAccessedDate(Calendar.getInstance().getTime());
-        updateUser(acc);
-        return acc;
-    }
-
-
-    List<User> findUsersByEmail(String email){
-        return userRepository.findUsersByEmailContainingIgnoreCase(email);
+    public User findUserByEmail(final String email) {
+        return userRepository.findUserByEmailContainingIgnoreCase(email)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("User with email = " + email + " not found!")
+                );
     }
 
     @Transactional
-    public User createUser(@NotNull User user){
+    public User createUser(@NotNull User user) {
         Optional<User> existingUser = userRepository.findUserByEmail(user.getEmail());
-        if(existingUser.isPresent()){
-            String email = user.getEmail();
-            throw new EmailAlreadyExistsException(email);
-        }
+        if (existingUser.isPresent())
+            throw new EntityAlreadyExistsException("User with email = " + user.getEmail() + " already exists!");
         return userRepository.save(user);
     }
 
-    public User getUser(@NotNull Long id){
-       return userRepository.findUserById(id).orElseThrow(() -> new UserNotFoundException(id));
+    public User assignRoleToUser(Role role, User user) throws EntityNotFoundException {
+        Optional<Role> assignRole = roleRepository.findOneByName(role.getName());
+        Optional<User> assignUser = userRepository.findUserByUsername(user.getUsername());
+        if (!assignRole.isPresent())
+            throw new EntityNotFoundException("Role with id = " + role.getId() + " not found");
+        if (!assignUser.isPresent())
+            throw new EntityNotFoundException("User with id = " + user.getId() + " not found!");
+        assignUser.get().getRoles().add(assignRole.get());
+        return userRepository.save(assignUser.get());
+    }
+
+    public UserDetails loadUserByUsername(String username) throws EntityNotFoundException {
+        Optional<User> account = userRepository.findUserByUsername(username);
+        if (!account.isPresent())
+            throw new EntityNotFoundException("User with username = " + username + " not found!");
+        account.get().setLastAccessedDate(Calendar.getInstance().getTime());
+        userRepository.save(account.get());
+        return account.get();
+    }
+
+    public User getUser(@NotNull long id) throws EntityNotFoundException {
+        return userRepository.findUserById(id).orElseThrow(() -> new EntityNotFoundException(("User doesn't exist!")));
     }
 
     @Transactional
-    public User save(@NotNull final User user){
-        return userRepository.save(user);
-    }
-
-    @Transactional
-    User updateUser(@NotNull User user){
-        Long id = user.getId();
+    public User updateUser(Long id, @NotNull User user) throws EntityNotFoundException, EntityAlreadyExistsException {
         Optional<User> dbUser = userRepository.findUserById(id);
-        if(!dbUser.isPresent()) {
-            throw new UserNotFoundException(id);
+        if (!dbUser.isPresent()) {
+            throw new EntityNotFoundException("User with id = " + id + " not found!");
         }
 
         String email = user.getEmail();
-        if(userRepository.findUserByEmailAndIdNot(email, id).isPresent()){
-            throw new EmailAlreadyExistsException(email);
+        if (userRepository.findUserByEmailAndIdNot(email, id).isPresent()) {
+            throw new EntityAlreadyExistsException("User with email = " + email + " already exists!");
         }
+        user.setId(id);
         return userRepository.save(user);
     }
 
     @Transactional
-    public void delete(@NotNull Long id){
+    public void delete(@NotNull long id) throws EntityNotFoundException {
+        if (!userRepository.existsById(id))
+            throw new EntityNotFoundException("User with id = " + id + " not found!");
         userRepository.deleteById(id);
     }
 
+    public User addVacationToUser(@NotNull User user, @NotNull Vacation vacation) {
+        return user.addVacation(vacation);
+    }
 }

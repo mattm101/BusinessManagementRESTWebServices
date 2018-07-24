@@ -1,7 +1,10 @@
 package com.springproject27.springproject.role;
 
 import com.springproject27.springproject.permission.Permission;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,7 +18,7 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Role implements Serializable,GrantedAuthority{
+public class Role implements Serializable, GrantedAuthority {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -27,7 +30,7 @@ public class Role implements Serializable,GrantedAuthority{
     @LazyCollection(LazyCollectionOption.FALSE)
     @JoinTable(
             name = "role_permissions",
-            joinColumns={@JoinColumn(name ="role_id",referencedColumnName = "id")},
+            joinColumns = {@JoinColumn(name = "role_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "permission_id", referencedColumnName = "id")}
     )
     private Set<Permission> permissions;

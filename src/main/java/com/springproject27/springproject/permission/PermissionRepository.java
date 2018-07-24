@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface PermissionRepository extends JpaRepository<Permission,Long> {
+public interface PermissionRepository extends JpaRepository<Permission, Long> {
     Optional<Permission> findOneByName(String name);
 }

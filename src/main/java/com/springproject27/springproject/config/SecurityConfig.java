@@ -1,8 +1,12 @@
 package com.springproject27.springproject.config;
 
+import com.springproject27.springproject.user.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -12,22 +16,41 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @EnableWebSecurity
 @ComponentScan
-public class SecurityConfig extends WebSecurityConfigurerAdapter{
-    @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception{
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-        httpSecurity
-                .authorizeRequests()
-                .antMatchers("/api/**")
-                .authenticated()
-                .and()
-        .httpBasic()
-                .and()
-        .csrf().disable();
+    @Autowired
+    UserService userService;
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth)
+            throws Exception {
+        auth.authenticationProvider(authenticationProvider());
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider
+                = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Override
+    protected void configure(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .authorizeRequests()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .httpBasic()
+                .and()
+                .csrf().disable();
+
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }

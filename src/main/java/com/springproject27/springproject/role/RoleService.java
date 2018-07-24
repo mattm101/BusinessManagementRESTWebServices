@@ -1,5 +1,6 @@
 package com.springproject27.springproject.role;
 
+import com.springproject27.springproject.exception.EntityNotFoundException;
 import com.springproject27.springproject.permission.Permission;
 import com.springproject27.springproject.permission.PermissionRepository;
 import lombok.Getter;
@@ -8,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.NoResultException;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,37 +23,44 @@ public class RoleService {
     @Autowired
     private PermissionRepository permissionRepository;
 
-    public void addRole(Role role){
+    public void addRole(Role role) {
         roleRepository.save(role);
     }
 
-    public Role getRole(Long id){
+    public Role getRole(Long id) {
         return roleRepository.getOne(id);
     }
 
-    public Role getRole(String name){
+    public Role getRole(String name) {
         return roleRepository.findOneByName(name).get();
     }
 
-    public void deleteRole(Long id){
+    public void deleteRole(Long id) throws EntityNotFoundException {
         Role currentRole = roleRepository.getOne(id);
+        if (currentRole == null)
+            throw new EntityNotFoundException("Role with id = " + id + " not found");
         roleRepository.delete(currentRole);
     }
 
-    public void updateRole(Role role){
-        Role updateRole = roleRepository.getOne(role.getId());
-        updateRole.setName(role.getName());
+    public void updateRole(Role role) throws EntityNotFoundException {
+        Role currentRole = roleRepository.getOne(role.getId());
+        if (currentRole == null)
+            throw new EntityNotFoundException("Role with id = " + role.getId() + " not found");
         roleRepository.save(role);
     }
 
-    public List<Role> getRoles(){
+    public List<Role> getRoles() {
         return roleRepository.findAll();
     }
 
-    public void assignPermissionToRole(Role role, Permission permission){
-        Permission assignPermission = permissionRepository.findOneByName(permission.getName()).get();
-        Role assignRole = roleRepository.findOneByName(role.getName()).get();
-        assignRole.getPermissions().add(assignPermission);
-        roleRepository.save(assignRole);
+    public void assignPermissionToRole(Role role, Permission permission) throws EntityNotFoundException {
+        Optional<Permission> assignPermission = permissionRepository.findOneByName(permission.getName());
+        Optional<Role> assignRole = roleRepository.findOneByName(role.getName());
+        if (!assignPermission.isPresent())
+            throw new EntityNotFoundException("Permission with id = " + permission.getId() + " not found");
+        if (!assignRole.isPresent())
+            throw new EntityNotFoundException("Role with id = " + role.getId() + " not found");
+        assignRole.get().getPermissions().add(assignPermission.get());
+        roleRepository.save(assignRole.get());
     }
 }

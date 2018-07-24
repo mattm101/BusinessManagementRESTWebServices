@@ -9,9 +9,14 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findUsersByLastNameContainingIgnoreCase(String lastName);
-    List<User> findUsersByEmailContainingIgnoreCase(String email);
-    Optional<User> findUserById(Long id);
-    Optional<User> findByUsername(String username);
+
+    Optional<User> findUserByEmailContainingIgnoreCase(String email);
+
+    Optional<User> findUserById(long id);
+
     Optional<User> findUserByEmail(String email);
-    Optional<User> findUserByEmailAndIdNot(String email, Long id);
+
+    Optional<User> findUserByEmailAndIdNot(String email, long id);
+
+    Optional<User> findUserByUsername(String username);
 }

@@ -11,14 +11,9 @@ public class UsersIdMethodSecurityExpressionRoot extends SecurityExpressionRoot 
         super(authentication);
     }
 
-    public boolean hasId(Long id){
-        User user = (User)this.authentication.getPrincipal();
+    public boolean hasId(Long id) {
+        User user = (User) this.authentication.getPrincipal();
         return user.getId().equals(id);
-    }
-
-    @Override
-    public void setFilterObject(Object filterObject) {
-
     }
 
     @Override
@@ -27,13 +22,18 @@ public class UsersIdMethodSecurityExpressionRoot extends SecurityExpressionRoot 
     }
 
     @Override
-    public void setReturnObject(Object returnObject) {
+    public void setFilterObject(Object filterObject) {
 
     }
 
     @Override
     public Object getReturnObject() {
         return null;
+    }
+
+    @Override
+    public void setReturnObject(Object returnObject) {
+
     }
 
     @Override
